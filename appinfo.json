@@ -9,6 +9,11 @@
     "resources": {
         "media": [
             {
+                "file": "images/icon.png",
+                "name": "MENU_ICON",
+                "type": "png"
+            },
+            {
                 "file": "images/tomoto.png",
                 "name": "IMAGE_TOMATO",
                 "type": "png"
@@ -17,6 +22,10 @@
     },
     "sdkVersion": "3",
     "shortName": "Pomodoro Timer",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
     "uuid": "1fe01450-ebff-4dc7-a82a-f6dc6e8e532a",
     "versionLabel": "1.0",
     "watchapp": {

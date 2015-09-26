@@ -1,7 +1,9 @@
 //Matthew Del Signore
 //Pebble Pomodoro Timer App
 #include <pebble.h>
+#include <string.h>
   
+//keys for persistent data store
 #define WORK_KEY 1
 #define POMODOROS_KEY 2
 #define RUNNING_KEY 3
@@ -13,20 +15,14 @@ static BitmapLayer *tomato_layer; //used to display the tomato images
 static int work = 1; //0 if it's a break, 1 if it's a work timer
 static int pomodoros = 0; //the number of pomdoros completed
 static int running = 0; //0 if the timer isn't running, 1 if it is
+static int s_timer=0; // the timer used for the pomodoro timer
 
 //timer lengths (in minutes)
 static int s_work_time = 1;
 static int s_rest_time = 1;
-static int s_timer=0; // the timer used for the pomodoro timer
-//keeps track of the location of the pomodoros
-static int x = 0;
-static int y = 55;
 
 //load the image of the tomato
 static GBitmap *s_tomato;
-
-//keys for the persistent data store
-
 
 //method to handle when a pomodoro is finished
 static void pomodoro_finished(){
@@ -39,8 +35,8 @@ static void pomodoro_finished(){
     //set it to a rest period
     work = 0;
     
-    y = 50+((pomodoros / 5))*30; 
-    x = (pomodoros%5)*30;
+    int y = 50+((pomodoros / 5))*30; 
+    int x = (pomodoros%5)*30;
     //add a tomato to the screen
     tomato_layer = bitmap_layer_create(GRect(x, y, 20, 20));
     bitmap_layer_set_bitmap(tomato_layer, s_tomato);
@@ -99,9 +95,19 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   }
 }
 
+//button to reset the timer
+static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
+  //reset all the fields
+  work = 1; //0 if it's a break, 1 if it's a work timer
+  pomodoros = 0; //the number of pomdoros completed
+  running = 0; //0 if the timer isn't running, 1 if it is
+  s_timer=0; // the timer used for the pomodoro timer
+}
+
 static void click_config_provider(void *context) {
   // Register the ClickHandlers
   window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
+  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
 }
 
 //draw the pomodoros
@@ -123,9 +129,9 @@ static void main_window_load(Window* window){
   //make the text pretty
   text_layer_set_background_color(timer_text, GColorClear);
   text_layer_set_text_color(timer_text, GColorBlack);
-  text_layer_set_text(timer_text, "00:00");
+  text_layer_set_text(timer_text, "00m00s");
   text_layer_set_text_alignment(timer_text, GTextAlignmentCenter);
-  text_layer_set_font(timer_text, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
+  text_layer_set_font(timer_text, fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK));
 
   //add the text layer
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(timer_text));
@@ -166,9 +172,6 @@ void init(void) {
   
    //add the click event handlers
   window_set_click_config_provider(main_window, click_config_provider);
-  
-  //update the timer value then the application starts 
-  update_time();
   
   //draw the tomatoes
   draw_tomatoes();
