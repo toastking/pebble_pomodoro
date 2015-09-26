@@ -20,26 +20,6 @@ static int y = 55;
 //load the image of the tomato
 static GBitmap *s_tomato;
 
-//load and start the timer
-static void main_window_load(Window* window){
-  timer_text = text_layer_create(GRect(0, 0, 144, 50)); //make the window the size of the pebbles screen
-
-  //make the text pretty
-  text_layer_set_background_color(timer_text, GColorClear);
-  text_layer_set_text_color(timer_text, GColorBlack);
-  text_layer_set_text(timer_text, "00:00");
-  text_layer_set_text_alignment(timer_text, GTextAlignmentCenter);
-  text_layer_set_font(timer_text, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
-
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(timer_text));
-}
-
-static void main_window_unload(Window *window) {
-    // Destroy timer text layer
-    text_layer_destroy(timer_text);
-}
-
-
 //method to handle when a pomodoro is finished
 static void pomodoro_finished(){
   //reset the timer
@@ -95,6 +75,43 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
 }
 
+//Event Handlers to start and pause the timer
+static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+  //start or stop the ticktimerservice to "pause" the timer
+  //update the timer every second
+  if(running == 0){
+    tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+  }else{
+    //update the timer every second
+    tick_timer_service_unsubscribe();
+  }
+}
+
+static void click_config_provider(void *context) {
+  // Register the ClickHandlers
+  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
+}
+
+//load and start the timer
+static void main_window_load(Window* window){
+  timer_text = text_layer_create(GRect(0, 0, 144, 50)); //make the window the size of the pebbles screen
+
+  //make the text pretty
+  text_layer_set_background_color(timer_text, GColorClear);
+  text_layer_set_text_color(timer_text, GColorBlack);
+  text_layer_set_text(timer_text, "00:00");
+  text_layer_set_text_alignment(timer_text, GTextAlignmentCenter);
+  text_layer_set_font(timer_text, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
+
+  //add the text layer
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(timer_text));
+}
+
+static void main_window_unload(Window *window) {
+    // Destroy timer text layer
+    text_layer_destroy(timer_text);
+}
+
 
 void init(void) {
   main_window = window_create();
@@ -104,12 +121,12 @@ void init(void) {
     .unload = main_window_unload
   });
   
-  //update the timer every second
-  tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
-  
   window_stack_push(main_window, true);
   
   s_tomato = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_TOMATO);
+  
+   //add the click event handlers
+  window_set_click_config_provider(main_window, click_config_provider);
   
   //update the timer value then the application starts 
   update_time();
