@@ -1,0 +1,19 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "mattdelsig@me.com",
+    "longName": "Pomodoro Timer",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "Pomodoro Timer",
+    "uuid": "1fe01450-ebff-4dc7-a82a-f6dc6e8e532a",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
