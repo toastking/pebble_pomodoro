@@ -1,6 +1,11 @@
 //Matthew Del Signore
 //Pebble Pomodoro Timer App
 #include <pebble.h>
+  
+#define WORK_KEY 1
+#define POMODOROS_KEY 2
+#define RUNNING_KEY 3
+#define S_TIME_KEY 4
 
 static Window *main_window;
 static TextLayer *timer_text;
@@ -20,6 +25,9 @@ static int y = 55;
 //load the image of the tomato
 static GBitmap *s_tomato;
 
+//keys for the persistent data store
+
+
 //method to handle when a pomodoro is finished
 static void pomodoro_finished(){
   //reset the timer
@@ -27,17 +35,18 @@ static void pomodoro_finished(){
   
   //check if it was a work or rest period
   if(work == 1){
-    //update the pomodoro timer
-    pomodoros++;
     //set it to a rest period
     work = 0;
     
     y = 50+((pomodoros / 5))*30; 
+    x = (pomodoros%5)*30;
     //add a tomato to the screen
     tomato_layer = bitmap_layer_create(GRect(x, y, 20, 20));
     bitmap_layer_set_bitmap(tomato_layer, s_tomato);
     layer_add_child(window_get_root_layer(main_window), bitmap_layer_get_layer(tomato_layer));
-    x += 30;
+    
+    //update the pomodoro timer
+    pomodoros++;
   }else{
     if(work == 0){
       //set it to a work period
@@ -114,6 +123,21 @@ static void main_window_unload(Window *window) {
 
 
 void init(void) {
+  //load variables from the persistent data store
+  if (persist_exists(WORK_KEY)) {
+    work = persist_read_int(WORK_KEY); //0 if it's a break, 1 if it's a work timer
+  }
+  if (persist_exists(POMODOROS_KEY)) {
+   pomodoros = persist_read_int(POMODOROS_KEY); //the number of pomdoros completed
+  }
+  if (persist_exists(RUNNING_KEY)) {
+   running = persist_read_int(RUNNING_KEY); //0 if the timer isn't running, 1 if it is
+  }
+  if (persist_exists(S_TIME_KEY)) {
+    s_timer=persist_read_int(S_TIME_KEY); // the timer used for the pomodoro timer
+  }
+  
+  //keeps track of the location of the pomodoros
   main_window = window_create();
 
   window_set_window_handlers(main_window, (WindowHandlers) {
@@ -136,6 +160,11 @@ void handle_deinit(void) {
   gbitmap_destroy(s_tomato);
   bitmap_layer_destroy(tomato_layer);
   window_destroy(main_window);
+  
+  persist_write_int(WORK_KEY, work);
+  persist_write_int(POMODOROS_KEY, pomodoros);
+  persist_write_int(RUNNING_KEY, running);
+  persist_write_int(S_TIME_KEY, s_timer);
   
 }
 
