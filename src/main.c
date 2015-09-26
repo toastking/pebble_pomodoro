@@ -103,6 +103,18 @@ static void click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
 }
 
+//draw the pomodoros
+static void draw_tomatoes(){
+  for(int i =0; i<pomodoros;i++){
+    int temp_y = 50+((i / 5))*30; 
+    int temp_x = (i%5)*30;
+    //add a tomato to the screen
+    tomato_layer = bitmap_layer_create(GRect(temp_x, temp_y, 20, 20));
+    bitmap_layer_set_bitmap(tomato_layer, s_tomato);
+    layer_add_child(window_get_root_layer(main_window), bitmap_layer_get_layer(tomato_layer));
+  }
+}
+
 //load and start the timer
 static void main_window_load(Window* window){
   timer_text = text_layer_create(GRect(0, 0, 144, 50)); //make the window the size of the pebbles screen
@@ -156,6 +168,9 @@ void init(void) {
   
   //update the timer value then the application starts 
   update_time();
+  
+  //draw the tomatoes
+  draw_tomatoes();
 }
 
 void handle_deinit(void) {
