@@ -4,9 +4,11 @@
 
 Window *main_window;
 TextLayer *timer_text;
-int work = 0; //0 if it's a break, 1 if it's a work timer
-int pomodoros = 0; //the number of pomdoros completed
+static int work = 0; //0 if it's a break, 1 if it's a work timer
+static int pomodoros = 0; //the number of pomdoros completed
+static int running = 0; //0 if the timer isn't running, 1 if it is
 
+static int s_timer=0; // the timer used for the pomodoro timer
 
 //load and start the timer
 void main_window_load(Window* window){
@@ -29,20 +31,27 @@ static void main_window_unload(Window *window) {
 
 //function called to update the timer
 static void update_time() {
-  // Get a tm structure
-  time_t temp = time(NULL); 
-  struct tm *tick_time = localtime(&temp);
-
   // Create a long-lived buffer
-  static char buffer[] = "00:00";
-
-  // Use 12 hour format
-  strftime(buffer, sizeof("00:00"), "%M:%S", tick_time);
+  static char buffer[] = "00m00s";
+  
+  int seconds = s_timer % 60;
+  int minutes = (s_timer % 3600) / 60;
+  
+  //increment the timer
+  s_timer++;
+  
+  // display the timer
+  snprintf(buffer, sizeof("00m00s"), "%dm%ds", minutes,seconds);
   
   // Display this time on the TextLayer
   text_layer_set_text(timer_text, buffer);
+  
+  //check if the timer is done
+  int timer_end = (work == 0) ? 5 : 25; //the timer end value
+  if (minutes == timer_end){
+    //TODO: add code to handle a timer ending
+  }
 }
-
 
 //event handler to update the timer text
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -66,7 +75,6 @@ void init(void) {
   //update the timer value then the application starts 
   update_time();
 }
-
 
 void handle_deinit(void) {
   window_destroy(main_window);
