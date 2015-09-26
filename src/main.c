@@ -90,9 +90,11 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   //update the timer every second
   if(running == 0){
     tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+    running = 1;
   }else{
     //update the timer every second
     tick_timer_service_unsubscribe();
+    running = 0;
   }
 }
 
