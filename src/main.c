@@ -8,6 +8,10 @@ static int work = 0; //0 if it's a break, 1 if it's a work timer
 static int pomodoros = 0; //the number of pomdoros completed
 static int running = 0; //0 if the timer isn't running, 1 if it is
 
+//timer lengths (in minutes)
+static int s_work_time = 1;
+static int s_rest_time = 1;
+
 static int s_timer=0; // the timer used for the pomodoro timer
 
 //load and start the timer
@@ -29,6 +33,25 @@ static void main_window_unload(Window *window) {
     text_layer_destroy(timer_text);
 }
 
+//method to handle when a pomodoro is finished
+static void pomodoro_finished(){
+  //reset the timer
+  s_timer = 0;
+  
+  //check if it was a work or rest period
+  if(work == 1){
+    //update the pomodoro timer
+    pomodoros++;
+    //set it to a rest period
+    work = 0;
+  }else{
+    if(work == 0){
+      //set it to a work period
+      work = 1; 
+    }
+  }
+}
+
 //function called to update the timer
 static void update_time() {
   // Create a long-lived buffer
@@ -47,9 +70,9 @@ static void update_time() {
   text_layer_set_text(timer_text, buffer);
   
   //check if the timer is done
-  int timer_end = (work == 0) ? 5 : 25; //the timer end value
+  int timer_end = (work == 0) ? s_rest_time : s_work_time; //the timer end value
   if (minutes == timer_end){
-    //TODO: add code to handle a timer ending
+    pomodoro_finished();
   }
 }
 
