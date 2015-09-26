@@ -52,7 +52,7 @@ static void pomodoro_finished(){
     //set it to a rest period
     work = 0;
     
-    y = 50+((pomodoros / 5))*20; 
+    y = 50+((pomodoros / 5))*30; 
     //add a tomato to the screen
     tomato_layer = bitmap_layer_create(GRect(x, y, 20, 20));
     bitmap_layer_set_bitmap(tomato_layer, s_tomato);
