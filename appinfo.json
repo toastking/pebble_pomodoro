@@ -7,7 +7,13 @@
     "longName": "Pomodoro Timer",
     "projectType": "native",
     "resources": {
-        "media": []
+        "media": [
+            {
+                "file": "images/tomoto.png",
+                "name": "IMAGE_TOMATO",
+                "type": "png"
+            }
+        ]
     },
     "sdkVersion": "3",
     "shortName": "Pomodoro Timer",
