@@ -32,6 +32,7 @@ static GBitmap *s_tomato;
 static void pomodoro_finished(){
   //reset the timer
   s_timer = 0;
+  vibes_short_pulse();
   
   //check if it was a work or rest period
   if(work == 1){
