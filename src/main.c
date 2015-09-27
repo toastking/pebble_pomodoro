@@ -13,8 +13,8 @@
 
    
 //timer lengths (in minutes)
-static int s_work_time = 1;
-static int s_rest_time = 1;
+static int s_work_time = 25;
+static int s_rest_time = 5;
 
 //stuff for the timer window
 static Window *main_window;
@@ -35,10 +35,35 @@ static Window *s_article_window;
 static ScrollLayer *s_article_scroll;
 static TextLayer *s_article_title;
 static TextLayer *s_article_text;
+static char s_article_buffer[80];
+static char s_article_title_buffer[80];
 
 //callbacks for the app message
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   //TODO: handle the article text
+  // Read first item
+  Tuple *t = dict_read_first(iterator);
+
+  // For all items
+  while(t != NULL) {
+    // Which key was received?
+    switch(t->key) {
+    case ARTICLE_TEXT:
+      snprintf(s_article_buffer, sizeof(s_article_buffer), "%s", t->value->cstring);
+      break;
+    case ARTICLE_TITLE:
+      snprintf(s_article_title_buffer, sizeof(s_article_title_buffer), "%s", t->value->cstring);
+      break;
+    default:
+      APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
+      break;
+    }
+
+    // Look for next item
+    t = dict_read_next(iterator);
+    text_layer_set_text(s_article_text, s_article_buffer);
+    text_layer_set_text(s_article_title, s_article_title_buffer);
+  }
 }
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
@@ -68,6 +93,7 @@ static void article_window_load(Window* window){
 
   // Initialize the text layer
   s_article_text = text_layer_create(max_text_bounds);
+  s_article_title = text_layer_create(max_text_bounds);
   //s_article_title = text_layer_create();
   text_layer_set_text(s_article_text, "loading...");
 
@@ -90,7 +116,7 @@ static void article_window_load(Window* window){
 
 static void article_window_unload(Window *window) {
   text_layer_destroy(s_article_text);
-  //text_layer_destroy(s_article_title);
+  text_layer_destroy(s_article_title);
   scroll_layer_destroy(s_article_scroll);
 }
 
@@ -120,7 +146,7 @@ static void pomodoro_finished(){
     text_layer_set_text(s_prompt, s_rest_text);
     
     //display the article window
-    //window_stack_push(s_article_window, true);
+    window_stack_push(s_article_window, true);
   }else{
     if(work == 0){
       //set it to a work period
@@ -130,6 +156,18 @@ static void pomodoro_finished(){
       text_layer_set_text(s_prompt, s_work_text);
     }
   }
+}
+static void redraw(){
+ static char buffer[] = "00m00s";
+  
+  int seconds = s_timer % 60;
+  int minutes = s_timer / 60;
+  
+  // display the timer
+  snprintf(buffer, sizeof("00m00s"), "%dm%ds", minutes,seconds);
+  
+  // Display this time on the TextLayer
+  text_layer_set_text(timer_text, buffer);  
 }
 
 //function called to update the timer
@@ -158,6 +196,19 @@ static void update_time() {
 //event handler to update the timer text
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
+  
+  // Get weather update every 30 minutes
+  if(tick_time->tm_min % 5 == 0) {
+  // Begin dictionary
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+
+  // Add a key-value pair
+  dict_write_uint8(iter, 0, 0);
+
+  // Send the message!
+  app_message_outbox_send();
+}
 }
 
 //Event Handlers to start and pause the timer
@@ -181,13 +232,22 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   pomodoros = 0; //the number of pomdoros completed
   running = 0; //0 if the timer isn't running, 1 if it is
   s_timer=s_work_time*60; // the timer used for the pomodoro timer
-  update_time();//redraw the timer
+  redraw();//redraw the timer
 }
+
+//button to reset the timer
+static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
+  //display the article window
+    window_stack_push(s_article_window, true);
+
+}
+
 
 static void click_config_provider(void *context) {
   // Register the ClickHandlers
   window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
   window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
+  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
 }
 
 //draw the pomodoros
@@ -221,9 +281,6 @@ static void main_window_load(Window* window){
   //add the text layer
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(timer_text));
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_prompt));
-  
-  //redraw the timer view
-  update_time();
 }
 
 static void main_window_unload(Window *window) {
@@ -265,6 +322,9 @@ void init(void) {
   
   //draw the tomatoes
   draw_tomatoes();
+  
+   //redraw the timer view
+  redraw();
   
   //initialize the article window
   s_article_window = window_create();

@@ -3,7 +3,7 @@
 
 var regex = /<.[^><]*>|\\/; //regex used for parsing the article
 var urls = new Array(); //array of urls to get the buzzfeed articles
-var text = ""; //string to send to the watch with article text
+var text = new Array(); //string to send to the watch with article text
 var title = ""; //title of the article to be send to the watch
 var gotUrls = false;
 
@@ -50,20 +50,41 @@ function getArticle(){
     function(responseText) {
       // responseText contains a JSON object
       var json = JSON.parse(responseText);
-      var arr = json.buzz.subbuzzes; //the array of articles
+      //var arr = json.buzz.sub_buzzes; //the array of articles
+      //console.log("test point 3");
+      //console.log(json);
+      //console.log("arr = " + arr);
       
-      for(var i=0; i<arr.length;i++){
-        if(arr[i].form == "text"){
-          var temp = arr[i].description;
-          articleText += temp.replace(regex,""); //remove the html tags
-        }
-      }
-    },
-             function(){
-               
-             }
-             //TODO: add another callback to send the article
-  );
+      //for(var i=0; i<arr.length;i++){
+        //if(arr[i].form == "text"){
+          //var temp = arr[i].description;
+          //console.log("test point 1");
+          //text.push(temp.replace(regex,""));
+          //console.log(temp.replace(regex,""));
+        //}
+      //}
+      console.log("text");
+               // Assemble dictionary using our keys
+      var desc = json.buzz.description;
+      var title = json.buzz.title;
+                var dict = {
+                  'ARTICLE_TEXT': desc.substr(0,50),
+                  'ARTICLE_TITLE': title.substr(0,50)
+                };
+
+              // Send to Pebble
+              Pebble.sendAppMessage(dict,
+                function(e) {
+                  console.log('Article info sent to Pebble successfully!');
+                },
+                function(e) {
+                  console.log('Error sending article info to Pebble!');
+                });
+    },function(){
+                
+              }
+             
+            );
 }
 
 // Listen for when the watchface is opened
