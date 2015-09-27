@@ -146,7 +146,7 @@ static void pomodoro_finished(){
     text_layer_set_text(s_prompt, s_rest_text);
     
     //display the article window
-    window_stack_push(s_article_window, true);
+    //window_stack_push(s_article_window, true);
   }else{
     if(work == 0){
       //set it to a work period
