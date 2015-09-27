@@ -1,13 +1,16 @@
 //Matthew Del Signore
 //Pebble Pomodoro Timer App
 #include <pebble.h>
-#include <string.h>
   
 //keys for persistent data store
 #define WORK_KEY 1
 #define POMODOROS_KEY 2
 #define RUNNING_KEY 3
 #define S_TIME_KEY 4
+   
+//timer lengths (in minutes)
+static int s_work_time = 1;
+static int s_rest_time = 1;
 
 static Window *main_window;
 static TextLayer *timer_text;
@@ -15,11 +18,7 @@ static BitmapLayer *tomato_layer; //used to display the tomato images
 static int work = 1; //0 if it's a break, 1 if it's a work timer
 static int pomodoros = 0; //the number of pomdoros completed
 static int running = 0; //0 if the timer isn't running, 1 if it is
-static int s_timer=0; // the timer used for the pomodoro timer
-
-//timer lengths (in minutes)
-static int s_work_time = 1;
-static int s_rest_time = 1;
+static int s_timer=60; // the timer used for the pomodoro timer
 
 //load the image of the tomato
 static GBitmap *s_tomato;
@@ -35,6 +34,8 @@ static void pomodoro_finished(){
     //set it to a rest period
     work = 0;
     
+    s_timer = s_rest_time * 60;
+    
     int y = 50+((pomodoros / 5))*30; 
     int x = (pomodoros%5)*30;
     //add a tomato to the screen
@@ -48,6 +49,7 @@ static void pomodoro_finished(){
     if(work == 0){
       //set it to a work period
       work = 1; 
+      s_timer = s_work_time * 60;
     }
   }
 }
@@ -58,10 +60,10 @@ static void update_time() {
   static char buffer[] = "00m00s";
   
   int seconds = s_timer % 60;
-  int minutes = (s_timer % 3600) / 60;
+  int minutes = s_timer / 60;
   
-  //increment the timer
-  s_timer++;
+  //decrement the timer
+  s_timer--;
   
   // display the timer
   snprintf(buffer, sizeof("00m00s"), "%dm%ds", minutes,seconds);
@@ -70,8 +72,7 @@ static void update_time() {
   text_layer_set_text(timer_text, buffer);
   
   //check if the timer is done
-  int timer_end = (work == 0) ? s_rest_time : s_work_time; //the timer end value
-  if (minutes == timer_end){
+  if (s_timer <= 0){
     pomodoro_finished();
   }
 }
@@ -101,7 +102,7 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   work = 1; //0 if it's a break, 1 if it's a work timer
   pomodoros = 0; //the number of pomdoros completed
   running = 0; //0 if the timer isn't running, 1 if it is
-  s_timer=0; // the timer used for the pomodoro timer
+  s_timer=s_work_time*60; // the timer used for the pomodoro timer
 }
 
 static void click_config_provider(void *context) {
@@ -125,7 +126,7 @@ static void draw_tomatoes(){
 //load and start the timer
 static void main_window_load(Window* window){
   timer_text = text_layer_create(GRect(0, 0, 144, 50)); //make the window the size of the pebbles screen
-
+  s_timer = s_work_time*60;
   //make the text pretty
   text_layer_set_background_color(timer_text, GColorClear);
   text_layer_set_text_color(timer_text, GColorBlack);

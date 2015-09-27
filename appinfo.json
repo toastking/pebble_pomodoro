@@ -10,6 +10,7 @@
         "media": [
             {
                 "file": "images/icon.png",
+                "menuIcon": true,
                 "name": "MENU_ICON",
                 "type": "png"
             },
@@ -21,7 +22,7 @@
         ]
     },
     "sdkVersion": "3",
-    "shortName": "Pomodoro Timer",
+    "shortName": "Pomodoro",
     "targetPlatforms": [
         "aplite",
         "basalt"
