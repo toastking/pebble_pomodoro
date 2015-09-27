@@ -13,8 +13,8 @@
 
    
 //timer lengths (in minutes)
-static int s_work_time = 25;
-static int s_rest_time = 5;
+static int s_work_time = 1;
+static int s_rest_time = 1;
 
 //stuff for the timer window
 static Window *main_window;
@@ -24,7 +24,7 @@ static BitmapLayer *tomato_layer; //used to display the tomato images
 static int work = 1; //0 if it's a break, 1 if it's a work timer
 static int pomodoros = 0; //the number of pomdoros completed
 static int running = 0; //0 if the timer isn't running, 1 if it is
-static int s_timer=25*60; // the timer used for the pomodoro timer
+static int s_timer=1*60; // the timer used for the pomodoro timer
 //load the image of the tomato
 static GBitmap *s_tomato;
 static char* s_work_text = "Work!";
