@@ -24,7 +24,7 @@ static BitmapLayer *tomato_layer; //used to display the tomato images
 static int work = 1; //0 if it's a break, 1 if it's a work timer
 static int pomodoros = 0; //the number of pomdoros completed
 static int running = 0; //0 if the timer isn't running, 1 if it is
-static int s_timer=60; // the timer used for the pomodoro timer
+static int s_timer=25*60; // the timer used for the pomodoro timer
 //load the image of the tomato
 static GBitmap *s_tomato;
 static char* s_work_text = "Work!";
@@ -198,17 +198,17 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
   
   // Get weather update every 30 minutes
-  if(tick_time->tm_min % 5 == 0) {
-  // Begin dictionary
-  DictionaryIterator *iter;
-  app_message_outbox_begin(&iter);
-
-  // Add a key-value pair
-  dict_write_uint8(iter, 0, 0);
-
-  // Send the message!
-  app_message_outbox_send();
-}
+  //if(tick_time->tm_min % 5 == 0) {
+    // Begin dictionary
+    //DictionaryIterator *iter;
+    //app_message_outbox_begin(&iter);
+  
+    // Add a key-value pair
+    //dict_write_uint8(iter, 0, 0);
+  
+    // Send the message!
+    //app_message_outbox_send();
+//}
 }
 
 //Event Handlers to start and pause the timer
@@ -228,10 +228,14 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
 //button to reset the timer
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   //reset all the fields
-  work = 1; //0 if it's a break, 1 if it's a work timer
-  pomodoros = 0; //the number of pomdoros completed
+  //work = 1; //0 if it's a break, 1 if it's a work timer
+  //pomodoros = 0; //the number of pomdoros completed
   running = 0; //0 if the timer isn't running, 1 if it is
-  s_timer=s_work_time*60; // the timer used for the pomodoro timer
+  if(work == 1){
+    s_timer=s_work_time*60; // the timer used for the pomodoro timer
+  }else{
+      s_timer=s_rest_time*60; // the timer used for the pomodoro timer
+  }
   redraw();//redraw the timer
 }
 
