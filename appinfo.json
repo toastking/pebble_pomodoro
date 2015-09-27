@@ -1,5 +1,8 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "ARTICLE_TEXT": 5,
+        "ARTICLE_TITLE": 6
+    },
     "capabilities": [
         ""
     ],
@@ -8,6 +11,11 @@
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/Screen Shot 2015-09-27 at 9.21.02 AM.png",
+                "name": "LOADER_IMAGE",
+                "type": "png"
+            },
             {
                 "file": "images/icon.png",
                 "menuIcon": true,

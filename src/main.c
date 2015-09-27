@@ -3,10 +3,14 @@
 #include <pebble.h>
   
 //keys for persistent data store
+//TODO: switch these to enums
 #define WORK_KEY 1
 #define POMODOROS_KEY 2
 #define RUNNING_KEY 3
 #define S_TIME_KEY 4
+#define ARTICLE_TEXT 5
+#define ARTICLE_TITLE 6
+
    
 //timer lengths (in minutes)
 static int s_work_time = 1;
@@ -28,6 +32,22 @@ static Window *s_article_window;
 static ScrollLayer *s_article_scroll;
 static TextLayer *s_article_title;
 static TextLayer *s_article_text;
+
+//callbacks for the app message
+static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+  //TODO: handle the article text
+}
+static void inbox_dropped_callback(AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
+}
+
+static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
+}
+
+static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
+}
 
 
 //load and unload article view
@@ -123,7 +143,7 @@ static void update_time() {
   text_layer_set_text(timer_text, buffer);
   
   //check if the timer is done
-  if (s_timer <= 0){
+  if (s_timer < 0){
     pomodoro_finished();
   }
 }
@@ -154,6 +174,7 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   pomodoros = 0; //the number of pomdoros completed
   running = 0; //0 if the timer isn't running, 1 if it is
   s_timer=s_work_time*60; // the timer used for the pomodoro timer
+  update_time();//redraw the timer
 }
 
 static void click_config_provider(void *context) {
@@ -177,7 +198,6 @@ static void draw_tomatoes(){
 //load and start the timer
 static void main_window_load(Window* window){
   timer_text = text_layer_create(GRect(0, 0, 144, 50)); //make the window the size of the pebbles screen
-  s_timer = s_work_time*60;
   //make the text pretty
   text_layer_set_background_color(timer_text, GColorClear);
   text_layer_set_text_color(timer_text, GColorBlack);
@@ -187,6 +207,9 @@ static void main_window_load(Window* window){
 
   //add the text layer
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(timer_text));
+  
+  //redraw the timer view
+  update_time();
 }
 
 static void main_window_unload(Window *window) {
@@ -235,6 +258,16 @@ void init(void) {
     .load = article_window_load,
     .unload = article_window_unload
   });
+  
+  // add callbacks for the web communication
+  app_message_register_inbox_received(inbox_received_callback);
+  app_message_register_inbox_dropped(inbox_dropped_callback);
+  app_message_register_outbox_failed(outbox_failed_callback);
+  app_message_register_outbox_sent(outbox_sent_callback);
+  
+  // open AppMessage
+  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+
 }
 
 void handle_deinit(void) {
