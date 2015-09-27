@@ -12,6 +12,7 @@
 static int s_work_time = 1;
 static int s_rest_time = 1;
 
+//stuff for the timer window
 static Window *main_window;
 static TextLayer *timer_text;
 static BitmapLayer *tomato_layer; //used to display the tomato images
@@ -19,9 +20,56 @@ static int work = 1; //0 if it's a break, 1 if it's a work timer
 static int pomodoros = 0; //the number of pomdoros completed
 static int running = 0; //0 if the timer isn't running, 1 if it is
 static int s_timer=60; // the timer used for the pomodoro timer
-
 //load the image of the tomato
 static GBitmap *s_tomato;
+
+//stuff for the buzzfeed article window
+static Window *s_article_window;
+static ScrollLayer *s_article_scroll;
+static TextLayer *s_article_title;
+static TextLayer *s_article_text;
+
+
+//load and unload article view
+static void article_window_load(Window* window){
+  Layer *window_layer = window_get_root_layer(window);
+  GRect bounds = layer_get_frame(window_layer);
+  GRect max_text_bounds = GRect(0, 0, bounds.size.w, 2000);
+
+  // Initialize the scroll layer
+  s_article_scroll = scroll_layer_create(bounds);
+
+  // This binds the scroll layer to the window so that up and down map to scrolling
+  // You may use scroll_layer_set_callbacks to add or override interactivity
+  scroll_layer_set_click_config_onto_window(s_article_scroll, window);
+
+  // Initialize the text layer
+  s_article_text = text_layer_create(max_text_bounds);
+  //s_article_title = text_layer_create();
+  text_layer_set_text(s_article_text, "loading...");
+
+  // Change the font to a nice readable one
+  // This is system font; you can inspect pebble_fonts.h for all system fonts
+  // or you can take a look at feature_custom_font to add your own font
+  text_layer_set_font(s_article_text, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+
+  // Trim text layer and scroll content to fit text box
+  GSize max_size = text_layer_get_content_size(s_article_text);
+  text_layer_set_size(s_article_text, max_size);
+  scroll_layer_set_content_size(s_article_scroll, GSize(bounds.size.w, max_size.h + 4));
+
+  // Add the layers for display
+  scroll_layer_add_child(s_article_scroll, text_layer_get_layer(s_article_text));
+  
+  //addi it to the root layer of the window
+  layer_add_child(window_layer, scroll_layer_get_layer(s_article_scroll));
+}
+
+static void article_window_unload(Window *window) {
+  text_layer_destroy(s_article_text);
+  //text_layer_destroy(s_article_title);
+  scroll_layer_destroy(s_article_scroll);
+}
 
 //method to handle when a pomodoro is finished
 static void pomodoro_finished(){
@@ -45,6 +93,9 @@ static void pomodoro_finished(){
     
     //update the pomodoro timer
     pomodoros++;
+    
+    //display the article window
+    window_stack_push(s_article_window, true);
   }else{
     if(work == 0){
       //set it to a work period
@@ -176,6 +227,14 @@ void init(void) {
   
   //draw the tomatoes
   draw_tomatoes();
+  
+  //initialize the article window
+  s_article_window = window_create();
+  
+  window_set_window_handlers(s_article_window, (WindowHandlers) {
+    .load = article_window_load,
+    .unload = article_window_unload
+  });
 }
 
 void handle_deinit(void) {
