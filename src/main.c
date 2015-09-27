@@ -19,6 +19,7 @@ static int s_rest_time = 1;
 //stuff for the timer window
 static Window *main_window;
 static TextLayer *timer_text;
+static TextLayer *s_prompt;
 static BitmapLayer *tomato_layer; //used to display the tomato images
 static int work = 1; //0 if it's a break, 1 if it's a work timer
 static int pomodoros = 0; //the number of pomdoros completed
@@ -26,6 +27,8 @@ static int running = 0; //0 if the timer isn't running, 1 if it is
 static int s_timer=60; // the timer used for the pomodoro timer
 //load the image of the tomato
 static GBitmap *s_tomato;
+static char* s_work_text = "Work!";
+static char* s_rest_text = "Rest!";
 
 //stuff for the buzzfeed article window
 static Window *s_article_window;
@@ -113,14 +116,18 @@ static void pomodoro_finished(){
     
     //update the pomodoro timer
     pomodoros++;
+    //chage the text on the bottom
+    text_layer_set_text(s_prompt, s_rest_text);
     
     //display the article window
-    window_stack_push(s_article_window, true);
+    //window_stack_push(s_article_window, true);
   }else{
     if(work == 0){
       //set it to a work period
       work = 1; 
       s_timer = s_work_time * 60;
+      //chage the text on the bottom
+      text_layer_set_text(s_prompt, s_work_text);
     }
   }
 }
@@ -198,15 +205,22 @@ static void draw_tomatoes(){
 //load and start the timer
 static void main_window_load(Window* window){
   timer_text = text_layer_create(GRect(0, 0, 144, 50)); //make the window the size of the pebbles screen
+  s_prompt = text_layer_create(GRect(0, 110, 144, 28)); //make the window the size of the pebbles screen
   //make the text pretty
   text_layer_set_background_color(timer_text, GColorClear);
   text_layer_set_text_color(timer_text, GColorBlack);
   text_layer_set_text(timer_text, "00m00s");
+  text_layer_set_background_color(s_prompt, GColorClear);
+  text_layer_set_text_color(s_prompt, GColorBlack);
+  text_layer_set_text(s_prompt, s_work_text);
   text_layer_set_text_alignment(timer_text, GTextAlignmentCenter);
   text_layer_set_font(timer_text, fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK));
+  text_layer_set_text_alignment(s_prompt, GTextAlignmentCenter);
+  text_layer_set_font(s_prompt, fonts_get_system_font(FONT_KEY_DROID_SERIF_28_BOLD));
 
   //add the text layer
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(timer_text));
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_prompt));
   
   //redraw the timer view
   update_time();
@@ -215,6 +229,7 @@ static void main_window_load(Window* window){
 static void main_window_unload(Window *window) {
     // Destroy timer text layer
     text_layer_destroy(timer_text);
+    text_layer_destroy(s_prompt);
 }
 
 
@@ -267,6 +282,15 @@ void init(void) {
   
   // open AppMessage
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  
+  //redraw the text
+  if(work == 0){
+    //chage the text on the bottom
+    text_layer_set_text(s_prompt, s_rest_text);
+  }else{
+    //chage the text on the bottom
+    text_layer_set_text(s_prompt, s_work_text);
+  }
 
 }
 
