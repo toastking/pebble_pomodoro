@@ -12,20 +12,20 @@
     "resources": {
         "media": [
             {
-                "file": "images/Screen Shot 2015-09-27 at 9.21.02 AM.png",
-                "name": "LOADER_IMAGE",
-                "type": "png"
-            },
-            {
                 "file": "images/icon.png",
                 "menuIcon": true,
                 "name": "MENU_ICON",
-                "type": "png"
+                "type": "bitmap"
+            },
+            {
+                "file": "images/Screen Shot 2015-09-27 at 9.21.02 AM.png",
+                "name": "LOADER_IMAGE",
+                "type": "bitmap"
             },
             {
                 "file": "images/tomoto.png",
                 "name": "IMAGE_TOMATO",
-                "type": "png"
+                "type": "bitmap"
             }
         ]
     },

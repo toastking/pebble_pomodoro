@@ -13,8 +13,8 @@
 
    
 //timer lengths (in minutes)
-static int s_work_time = 1;
-static int s_rest_time = 1;
+static int s_work_time = 25;
+static int s_rest_time = 5;
 
 //stuff for the timer window
 static Window *main_window;
@@ -30,95 +30,8 @@ static GBitmap *s_tomato;
 static char* s_work_text = "Work!";
 static char* s_rest_text = "Rest!";
 
-//stuff for the buzzfeed article window
-static Window *s_article_window;
-static ScrollLayer *s_article_scroll;
-static TextLayer *s_article_title;
-static TextLayer *s_article_text;
-static char s_article_buffer[80];
-static char s_article_title_buffer[80];
-
-//callbacks for the app message
-static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
-  //TODO: handle the article text
-  // Read first item
-  Tuple *t = dict_read_first(iterator);
-
-  // For all items
-  while(t != NULL) {
-    // Which key was received?
-    switch(t->key) {
-    case ARTICLE_TEXT:
-      snprintf(s_article_buffer, sizeof(s_article_buffer), "%s", t->value->cstring);
-      break;
-    case ARTICLE_TITLE:
-      snprintf(s_article_title_buffer, sizeof(s_article_title_buffer), "%s", t->value->cstring);
-      break;
-    default:
-      APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
-      break;
-    }
-
-    // Look for next item
-    t = dict_read_next(iterator);
-    text_layer_set_text(s_article_text, s_article_buffer);
-    text_layer_set_text(s_article_title, s_article_title_buffer);
-  }
-}
-static void inbox_dropped_callback(AppMessageResult reason, void *context) {
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
-}
-
-static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
-}
-
-static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
-  APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
-}
 
 
-//load and unload article view
-static void article_window_load(Window* window){
-  Layer *window_layer = window_get_root_layer(window);
-  GRect bounds = layer_get_frame(window_layer);
-  GRect max_text_bounds = GRect(0, 0, bounds.size.w, 2000);
-
-  // Initialize the scroll layer
-  s_article_scroll = scroll_layer_create(bounds);
-
-  // This binds the scroll layer to the window so that up and down map to scrolling
-  // You may use scroll_layer_set_callbacks to add or override interactivity
-  scroll_layer_set_click_config_onto_window(s_article_scroll, window);
-
-  // Initialize the text layer
-  s_article_text = text_layer_create(max_text_bounds);
-  s_article_title = text_layer_create(max_text_bounds);
-  //s_article_title = text_layer_create();
-  text_layer_set_text(s_article_text, "loading...");
-
-  // Change the font to a nice readable one
-  // This is system font; you can inspect pebble_fonts.h for all system fonts
-  // or you can take a look at feature_custom_font to add your own font
-  text_layer_set_font(s_article_text, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-
-  // Trim text layer and scroll content to fit text box
-  GSize max_size = text_layer_get_content_size(s_article_text);
-  text_layer_set_size(s_article_text, max_size);
-  scroll_layer_set_content_size(s_article_scroll, GSize(bounds.size.w, max_size.h + 4));
-
-  // Add the layers for display
-  scroll_layer_add_child(s_article_scroll, text_layer_get_layer(s_article_text));
-  
-  //addi it to the root layer of the window
-  layer_add_child(window_layer, scroll_layer_get_layer(s_article_scroll));
-}
-
-static void article_window_unload(Window *window) {
-  text_layer_destroy(s_article_text);
-  text_layer_destroy(s_article_title);
-  scroll_layer_destroy(s_article_scroll);
-}
 
 //method to handle when a pomodoro is finished
 static void pomodoro_finished(){
@@ -196,19 +109,17 @@ static void update_time() {
 //event handler to update the timer text
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
+  //check for the time to see if a day has passed
+  char* hour = "00";
   
-  // Get weather update every 30 minutes
-  //if(tick_time->tm_min % 5 == 0) {
-    // Begin dictionary
-    //DictionaryIterator *iter;
-    //app_message_outbox_begin(&iter);
-  
-    // Add a key-value pair
-    //dict_write_uint8(iter, 0, 0);
-  
-    // Send the message!
-    //app_message_outbox_send();
-//}
+  strftime(hour, sizeof("00"), "%H", tick_time);
+    
+  //check if it's a new day
+  if (strcmp("24", hour)==0){
+    //reset the number of pomodors
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "inside conditional");
+    pomodoros = 0;
+  }
 }
 
 //Event Handlers to start and pause the timer
@@ -239,19 +150,12 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   redraw();//redraw the timer
 }
 
-//button to reset the timer
-static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  //display the article window
-    window_stack_push(s_article_window, true);
-
-}
 
 
 static void click_config_provider(void *context) {
   // Register the ClickHandlers
   window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
   window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
-  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
 }
 
 //draw the pomodoros
@@ -329,23 +233,6 @@ void init(void) {
   
    //redraw the timer view
   redraw();
-  
-  //initialize the article window
-  s_article_window = window_create();
-  
-  window_set_window_handlers(s_article_window, (WindowHandlers) {
-    .load = article_window_load,
-    .unload = article_window_unload
-  });
-  
-  // add callbacks for the web communication
-  app_message_register_inbox_received(inbox_received_callback);
-  app_message_register_inbox_dropped(inbox_dropped_callback);
-  app_message_register_outbox_failed(outbox_failed_callback);
-  app_message_register_outbox_sent(outbox_sent_callback);
-  
-  // open AppMessage
-  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
   
   //redraw the text
   if(work == 0){
