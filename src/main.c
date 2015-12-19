@@ -8,8 +8,7 @@
 #define POMODOROS_KEY 2
 #define RUNNING_KEY 3
 #define S_TIME_KEY 4
-#define ARTICLE_TEXT 5
-#define ARTICLE_TITLE 6
+#define DATE_KEY 5
 
    
 //timer lengths (in minutes)
@@ -29,6 +28,7 @@ static int s_timer=1*60; // the timer used for the pomodoro timer
 static GBitmap *s_tomato;
 static char* s_work_text = "Work!";
 static char* s_rest_text = "Rest!";
+static char* s_date = "00/00/00";
 
 
 
@@ -110,12 +110,17 @@ static void update_time() {
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
   //check for the time to see if a day has passed
-  char* hour = "00";
+  char* date = "00/00/00";
   
-  strftime(hour, sizeof("00"), "%H", tick_time);
+  if(strcmp(s_date, "00/00/00")!=0){
+    strftime(date, sizeof("00/00/00"), "%D", tick_time);
+  }else{
+    //otherwise write to the date string
+    strftime(s_date, sizeof("00/00/00"), "%D", tick_time);
+  }
     
   //check if it's a new day
-  if (strcmp("24", hour)==0){
+  if (strcmp(s_date, date)==0){
     //reset the number of pomodors
     APP_LOG(APP_LOG_LEVEL_DEBUG, "inside conditional");
     pomodoros = 0;
@@ -212,6 +217,9 @@ void init(void) {
   if (persist_exists(S_TIME_KEY)) {
     s_timer=persist_read_int(S_TIME_KEY); // the timer used for the pomodoro timer
   }
+   if (persist_exists(DATE_KEY)) {
+    s_timer=persist_read_string(DATE_KEY, s_date, sizeof("00/00/00")); // the string used for the date
+  }
   
   //keeps track of the location of the pomodoros
   main_window = window_create();
@@ -254,6 +262,7 @@ void handle_deinit(void) {
   persist_write_int(POMODOROS_KEY, pomodoros);
   persist_write_int(RUNNING_KEY, running);
   persist_write_int(S_TIME_KEY, s_timer);
+  persist_write_string(DATE_KEY, s_date);
   
 }
 
